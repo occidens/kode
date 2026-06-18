@@ -20,6 +20,22 @@ kode_handle () {
     exec code --remote "ssh-remote+${host}" "$path"
 }
 
+kode_show_ssh_config () {
+    cat <<EOF
+    RemoteForward $SOCK $SOCK
+    StreamLocalBindUnlink yes
+    ExitOnForwardFailure yes
+    ServerAliveInterval 30
+    ServerAliveCountMax 3
+EOF
+}
+
+kode_show_sshd_config () {
+    cat <<EOF
+    StreamLocalBindUnlink yes
+EOF
+}
+
 main () {
     local cmd="$1"; shift
 
