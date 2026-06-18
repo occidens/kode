@@ -21,7 +21,7 @@ kode_handle () {
 }
 
 main () {
-    local cmd="$1"
+    local cmd="$1"; shift
 
     case "$cmd" in
         open)
