@@ -1,15 +1,23 @@
 #!/usr/bin/env bash
 
+SOCK=/tmp/code-trigger.sock
+
 kode_open () {
 # realpath so the local side gets an absolute path that exists on the server
-printf '%s\n' "$(realpath "${1:-$PWD}")" \
-    | socat - UNIX-CONNECT:/tmp/code-trigger.sock
+printf '%s\n%s\n' "$(hostname -s)" "$(realpath "${1:-$PWD}")" \
+  | socat - UNIX-CONNECT:${SOCK}
 }
 
 kode_listen () {
     exec socat \
-        UNIX-LISTEN:/tmp/code-trigger.sock,fork,reuseaddr \
-        SYSTEM:'read p; code --remote ssh-remote+saarinen "$p"'
+        UNIX-LISTEN:${SOCK},fork,reuseaddr \
+        EXEC:"$0 handle"
+}
+
+kode_handle () {
+    IFS= read -r host
+    IFS= read -r path
+    exec code --remote "ssh-remote+${host}" "$path"
 }
 
 main () {
@@ -17,14 +25,17 @@ main () {
 
     case "$cmd" in
         open)
-            kode_open
-        ;;
+            kode_open "$@"
+            ;;
         listen)
-            kode_listen
-        ;;
+            kode_listen "$@"
+            ;;
+        handle)
+            kode_handle "$@"
+            ;;
         *)
-        echo "usage: $0 {listen|open}"
-        exit 1
+            echo "usage: $0 {listen|open}"
+            exit 1
         ;;
     esac
 }
